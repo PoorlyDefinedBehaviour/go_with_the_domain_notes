@@ -18,6 +18,11 @@ var (
 	TrainingScheduled = Availability{"training_scheduled"}
 )
 
+var (
+	ErrHourHasTrainingScheduled = errors.New("hour has a training scheduled")
+	ErrNoTrainingScheduled      = errors.New("no training scheduled")
+)
+
 type Hour struct {
 	hour         time.Time
 	availability Availability
@@ -35,8 +40,6 @@ func (hour Hour) HasTrainingScheduled() bool {
 	return hour.availability == TrainingScheduled
 }
 
-var ErrNoTrainingScheduled = errors.New("no training scheduled")
-
 func (hour *Hour) CancelTraining() error {
 	if !hour.HasTrainingScheduled() {
 		return errors.WithStack(ErrNoTrainingScheduled)
@@ -47,14 +50,32 @@ func (hour *Hour) CancelTraining() error {
 	return nil
 }
 
-var ErrTrainingAlreadyScheduledForHour = errors.New("hour already has a training scheduled")
-
 func (hour *Hour) ScheduleTraining() error {
 	if hour.HasTrainingScheduled() {
-		return errors.WithStack(ErrTrainingAlreadyScheduledForHour)
+		return errors.WithStack(ErrHourHasTrainingScheduled)
 	}
 
 	hour.availability = TrainingScheduled
+
+	return nil
+}
+
+func (hour *Hour) MakeAvailable() error {
+	if hour.HasTrainingScheduled() {
+		return errors.WithStack(ErrHourHasTrainingScheduled)
+	}
+
+	hour.availability = Available
+
+	return nil
+}
+
+func (hour *Hour) MakeUnavailable() error {
+	if hour.HasTrainingScheduled() {
+		return errors.WithStack(ErrHourHasTrainingScheduled)
+	}
+
+	hour.availability = Unavailable
 
 	return nil
 }
